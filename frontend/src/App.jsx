@@ -11,15 +11,15 @@ import SearchOverlay from './components/SearchOverlay'
 
 // 메인 화면 줄 구성 (key는 백엔드 /api/home 응답 키)
 const ROWS = [
-  { key: 'trending', title: '티빙에서 꼭 봐야하는 콘텐츠' },
-  { key: 'top20', title: '오늘의 티빙 TOP 20', variant: 'rank' },
-  { key: 'now_playing', title: '지금 극장에서 상영 중인 영화', variant: 'wide' },
-  { key: 'korean_drama', title: '화제의 K-드라마' },
-  { key: 'popular_movies', title: '지금 인기 있는 영화' },
-  { key: 'popular_tv', title: '전 세계 인기 시리즈' },
-  { key: 'upcoming', title: '공개 예정 콘텐츠', badge: '공개예정' },
-  { key: 'top_rated', title: '평점이 높은 명작 영화' },
-  { key: 'animation', title: '온 가족이 함께 보는 애니메이션' },
+  { key: 'trending', title: '오늘 가장 많이 본 작품' },
+  { key: 'top20', title: '이번 주 영화 TOP 20', variant: 'rank' },
+  { key: 'now_playing', title: '지금 극장 상영작', variant: 'wide' },
+  { key: 'korean_drama', title: '요즘 뜨는 한국 드라마' },
+  { key: 'popular_movies', title: '인기 영화' },
+  { key: 'popular_tv', title: '인기 해외 시리즈' },
+  { key: 'upcoming', title: '곧 개봉하는 영화', badge: '개봉예정' },
+  { key: 'top_rated', title: '평점 높은 명작 영화' },
+  { key: 'animation', title: '인기 애니메이션 영화' },
 ]
 
 // 주소의 #/drama 같은 해시로 현재 페이지를 정한다 (뒤로가기 지원)

@@ -3,21 +3,24 @@ import { img } from '../api'
 
 /**
  * 배너와 콘텐츠 사이의 동그란 바로가기 아이콘 줄 (TVING 메인 참고)
- * - type 'cat'  : 그라데이션 원 + 글자 로고 → 메뉴 페이지 이동 또는 해당 콘텐츠 줄로 스크롤
+ * - type 'cat'  : 광택 있는 구슬 모양 원 + 글자 로고 → 메뉴 페이지 이동 또는 해당 콘텐츠 줄로 스크롤
  * - type 'item' : 작품 포스터를 동그랗게 → 상세 창 열기
+ * orb: [밝은 중심색, 가장자리색, 반사광색], ink: 글자색, sub: 둘째 줄 작은 글자
  */
 const CATS = {
-  original: { label: '오리지널', mark: 'ORIGINAL', bg: 'linear-gradient(135deg,#ff153c,#ff4fa3)', row: 'trending' },
-  soon: { label: '공개예정', mark: 'SOON', bg: 'linear-gradient(135deg,#ffb300,#ff6a00)', row: 'upcoming' },
-  movie: { label: '영화', mark: 'MOVIE', bg: 'linear-gradient(135deg,#2f6bff,#00c2ff)', page: 'movie' },
-  kdrama: { label: 'K-드라마', mark: 'K·D', bg: 'linear-gradient(135deg,#00b37e,#00e0c6)', page: 'drama' },
-  top: { label: '오늘의\nTOP 20', mark: 'TOP', bg: 'linear-gradient(135deg,#3a3a3a,#111)', row: 'top20' },
-  now: { label: '지금 극장\n상영작', mark: 'NOW', bg: 'linear-gradient(135deg,#ff3d3d,#8b0000)', row: 'now_playing' },
-  series: { label: '해외\n시리즈', mark: 'SERIES', bg: 'linear-gradient(135deg,#7b2ff7,#f107a3)', row: 'popular_tv' },
-  best: { label: '평점 높은\n명작', mark: 'BEST', bg: 'linear-gradient(135deg,#d4a017,#7a5a00)', row: 'top_rated' },
-  ani: { label: '애니메이션', mark: 'ANI', bg: 'linear-gradient(135deg,#ffe000,#ff9f00)', page: 'anime', dark: true },
-  pick: { label: '오늘 뭐 볼까?', mark: 'PICK', bg: 'linear-gradient(135deg,#a020f0,#5b21ff)', pick: true },
+  original: { label: '오늘의 인기작', mark: 'HOT', orb: ['#ff2a55', '#e0004e', '#ffb43a'], row: 'trending' },
+  soon: { label: '개봉 예정', mark: 'SOON', orb: ['#ffa21f', '#ff6a00', '#ffd36b'], ink: '#2a1200', row: 'upcoming' },
+  movie: { label: '영화', mark: 'MOVIE', orb: ['#3d7bff', '#1d3fd8', '#7fd8ff'], page: 'movie' },
+  kdrama: { label: '한국 드라마', mark: 'K-DRAMA', orb: ['#16d39a', '#00936e', '#b9ffd9'], page: 'drama' },
+  top: { label: '이번 주 TOP 20', mark: 'TOP', sub: '20', orb: ['#3b3b40', '#0b0b0d', '#8a8a95'], row: 'top20' },
+  now: { label: '지금 극장 상영작', mark: 'NOW', sub: 'PLAYING', orb: ['#ff3b3b', '#b30012', '#ff9a7a'], row: 'now_playing' },
+  series: { label: '해외 시리즈', mark: 'SERIES', orb: ['#b13cff', '#6a12d6', '#ff7ad9'], row: 'popular_tv' },
+  best: { label: '평점 높은 명작', mark: 'BEST', orb: ['#f2c24b', '#a8740a', '#fff1b0'], ink: '#2e1d00', row: 'top_rated' },
+  ani: { label: '애니메이션', mark: 'ANI', orb: ['#ffe14a', '#ffac00', '#fffbd0'], ink: '#2e1d00', page: 'anime' },
+  pick: { label: '오늘 뭐 볼까?', eyes: true, orb: ['#c34dff', '#7a1fe0', '#ff8ff0'], pick: true },
 }
+
+const orbStyle = ([c1, c2, hl], ink) => ({ '--c1': c1, '--c2': c2, '--hl': hl, ...(ink && { '--ink': ink }) })
 
 export default function QuickMenu({ home, onSelect, onNavigate }) {
   const items = useMemo(() => {
@@ -58,14 +61,25 @@ export default function QuickMenu({ home, onSelect, onNavigate }) {
         {items.map((it) => (
           <li key={it.key}>
             <button type="button" className="quick__btn" onClick={() => handle(it)}>
-              <span className="quick__circle" style={it.type === 'cat' ? { background: it.bg } : undefined}>
+              <span className="quick__ring">
                 {it.type === 'item' ? (
-                  <img src={img(it.data.poster_path, 'w185')} alt="" loading="lazy" />
+                  <span className="quick__circle is-poster">
+                    <img src={img(it.data.poster_path, 'w342')} alt="" loading="lazy" />
+                  </span>
                 ) : (
-                  <span className={`quick__mark ${it.mark.length > 5 ? 'is-long' : ''} ${it.dark ? 'is-dark' : ''}`}>{it.mark}</span>
+                  <span className="quick__circle is-orb" style={orbStyle(it.orb, it.ink)}>
+                    {it.eyes ? (
+                      <span className="quick__eyes" aria-hidden="true"><i /><i /></span>
+                    ) : (
+                      <span className={`quick__mark ${it.mark.length > 6 ? 'is-xlong' : it.mark.length > 5 ? 'is-long' : ''}`}>
+                        {it.mark}
+                        {it.sub && <small>{it.sub}</small>}
+                      </span>
+                    )}
+                  </span>
                 )}
+                {it.badge && <span className="quick__badge">N</span>}
               </span>
-              {it.badge && <span className="quick__badge">N</span>}
               <span className="quick__label">{it.label}</span>
             </button>
           </li>
