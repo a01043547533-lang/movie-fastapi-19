@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env        # TMDB 키 (서버에만 존재)
+    restart: unless-stopped         # 서버 재부팅 시 자동 시작
+    expose:
+      - "8000"                      # 내부 네트워크에만 공개
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"                     # 외부에 여는 유일한 포트
+    depends_on:
+      - backend
