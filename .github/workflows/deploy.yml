@@ -50,8 +50,18 @@ jobs:
           KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # 윈도우에서 복사하면 섞이는 \r 제거
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+
+          # Secret 값 점검 (값은 출력하지 않음)
+          [ -n "$SSH_KEY" ] || { echo "::error::EC2_SSH_KEY Secret이 비어 있습니다"; exit 1; }
+          [ -n "$KNOWN_HOSTS" ] || { echo "::error::EC2_KNOWN_HOSTS Secret이 비어 있습니다"; exit 1; }
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
+            || { echo "::error::EC2_SSH_KEY 형식이 잘못됐습니다 (BEGIN~END 줄까지 전체를 넣었는지 확인)"; exit 1; }
+          ssh-keygen -F "$EC2_HOST" -f ~/.ssh/known_hosts > /dev/null \
+            || { echo "::error::EC2_KNOWN_HOSTS 에 $EC2_HOST 줄이 없습니다"; exit 1; }
+          echo "Secret 점검 통과"
           SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o ConnectTimeout=20"
 
           tar czf /tmp/app.tgz \
