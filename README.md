@@ -33,23 +33,25 @@ http://localhost:5173 접속
 
 ## GitHub 자동 배포 (AWS EC2)
 
-`main` 브랜치에 push하면 GitHub Actions가 서버(http://3.105.22.205)에 자동 배포합니다.
+`main` 브랜치에 push하면 1~4분 안에 서버(http://3.105.22.205)에 자동 반영됩니다.
 
 ```
 git add . && git commit -m "변경 내용" && git push
 ```
 
-동작 순서 (`.github/workflows/deploy.yml`)
-1. 프론트 빌드·백엔드 문법 확인 (실패하면 서버는 건드리지 않음)
-2. 코드 묶음을 SSH로 업로드 → 서버에서 `scripts/deploy-remote.sh` 실행
-   - 서버에만 있는 `backend/.env` 유지, `docker compose up -d --build`
-   - 상태 확인 실패 시 **이전 버전으로 자동 복구**
-3. 외부에서 화면·API 확인
+동작 방식
+1. GitHub Actions(`.github/workflows/ci.yml`)가 프론트 빌드·백엔드·도커 빌드를 확인
+2. 서버가 1분마다 GitHub를 확인 (`scripts/auto-deploy.sh`, systemd 타이머)
+   - 새 커밋의 CI가 **성공**이면 `git reset --hard` → `docker compose up -d --build`
+   - CI가 실패한 커밋은 배포하지 않음
+   - 배포 후 `/api/health` 확인에 실패하면 **직전 커밋으로 자동 복구**
+3. TMDB 키(`backend/.env`)는 서버에만 있고 GitHub에는 올라가지 않음
 
-필요한 GitHub Secrets (Settings > Secrets and variables > Actions)
-| 이름 | 값 |
-|---|---|
-| `EC2_SSH_KEY` | `movie-deploy-key.pem` 파일 내용 전체 |
-| `EC2_KNOWN_HOSTS` | `ssh-keyscan 3.105.22.205` 결과 (서버 호스트 키) |
+GitHub Secret이나 SSH 접속이 필요 없습니다.
 
-서버 SSH(22번)는 GitHub Actions 접속을 위해 전체(0.0.0.0/0)에 열려 있으며, 비밀번호 로그인은 꺼져 있어 열쇠(.pem)로만 접속됩니다.
+서버에서 쓰는 명령
+```
+journalctl -u movie-auto-deploy -f           # 배포 기록 보기
+sudo systemctl stop movie-auto-deploy.timer  # 자동 배포 끄기 (start로 다시 켜기)
+```
+처음 설치: 서버에서 `bash scripts/install-auto-deploy.sh` (이미 설치됨)

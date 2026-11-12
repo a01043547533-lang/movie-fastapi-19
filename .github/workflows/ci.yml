@@ -1,0 +1,42 @@
+# 빌드 확인 (CI)
+# 서버는 1분마다 GitHub를 확인해서, 이 확인이 "성공"한 커밋만 자동 배포합니다.
+# 실패하면 서버는 그대로 둡니다. (scripts/auto-deploy.sh)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 프론트엔드 빌드
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund && npm run build
+        working-directory: frontend
+
+      - name: 백엔드 확인
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install -q -r backend/requirements.txt
+          cd backend && python -c "import main; print('import ok')"
+
+      - name: 도커 이미지 빌드
+        run: |
+          touch backend/.env   # 키 없이 빌드만 확인 (실제 키는 서버에만 있음)
+          docker compose build
