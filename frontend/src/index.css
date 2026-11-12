@@ -53,10 +53,15 @@ img { display: block; }
 .gnb a.is-active { color: #fff; }
 .header__right { display: flex; align-items: center; gap: 1.6vw; }
 .header__right svg { width: max(1.7vw, 24px); height: max(1.7vw, 24px); }
-.profile__img {
-  display: block; width: max(2.1vw, 30px); height: max(2.1vw, 30px); border-radius: 4px;
-  background: linear-gradient(135deg, #ff153c, #ff8a00);
+/* 로그인 버튼 (빨간 알약 모양) */
+.btn-login {
+  height: max(2.1vw, 32px); padding: 0 max(1.1vw, 14px); border-radius: 999px;
+  background: var(--red); color: #fff; font-size: max(.95vw, 14px); font-weight: 700; letter-spacing: -.02em;
+  white-space: nowrap; transition: background .2s, transform .2s;
 }
+.btn-login:hover { background: #ff3d5e; }
+.btn-login:active { transform: scale(.96); }
+.btn-login:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* ---------- Hero (Swiper 캐러셀) ---------- */
 .hero { position: relative; padding-top: var(--header-h); --peek: 24px; }
@@ -130,16 +135,51 @@ img { display: block; }
 
 /* ---------- Quick menu (동그란 바로가기) ---------- */
 /* TVING: 칸 114px · 원 82px(1600px 화면 기준), 광택 구슬, 마우스 올리면 확대 */
-.quick { --orb: max(5.125vw, 66px); --slot: calc(var(--orb) * 1.4); margin-top: max(2.4vw, 26px); }
+.quick {
+  /* 한 화면에 딱 맞는 칸 수(--cols)로 나눠서, 끝에 반쯤 잘린 아이콘이 생기지 않게 */
+  --cols: 12;
+  --orb: max(5.125vw, 66px);
+  position: relative; margin-top: max(2.4vw, 26px);
+}
 .quick__list {
-  display: flex; gap: 0; padding: 0 calc(var(--gutter) + 2.2vw);
-  overflow-x: auto; scrollbar-width: none;
+  display: flex; padding: 0 var(--gutter);
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
 }
 .quick__list::-webkit-scrollbar { display: none; }
-.quick__list li { flex: 0 0 auto; }
+.quick__list li { flex: 0 0 calc(100% / var(--cols)); display: flex; justify-content: center; scroll-snap-align: start; }
+/* 좌우 넘김 버튼: 양쪽 여백 가운데, 원 높이 가운데 */
+.quick__arrow {
+  --size: min(max(2.6vw, 36px), calc(var(--gutter) - 8px));
+  position: absolute; z-index: 6; top: calc(6px + var(--orb) / 2); transform: translateY(-50%);
+  width: var(--size); height: var(--size); border-radius: 50%;
+  display: grid; place-items: center; color: #fff;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  transition: background .2s, color .2s, transform .2s, border-color .2s;
+}
+.quick__arrow:hover { background: #fff; color: #000; border-color: #fff; }
+.quick__arrow:active { transform: translateY(-50%) scale(.92); }
+.quick__arrow:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.quick__arrow svg { width: 55%; height: 55%; }
+.quick__arrow--prev { left: calc((var(--gutter) - var(--size)) / 2); }
+.quick__arrow--next { right: calc((var(--gutter) - var(--size)) / 2); }
+@media (max-width: 1199px) { .quick { --cols: 10; } }
+@media (max-width: 899px) { .quick { --cols: 7; } }
+/* 양쪽 여백을 가려서 반쯤 잘린 아이콘이 비치지 않게 (버튼은 그 위에) */
+.quick::before, .quick::after {
+  content: ''; position: absolute; top: 0; bottom: 0; z-index: 5; width: var(--gutter);
+  background: var(--bg); pointer-events: none;
+}
+.quick::before { left: 0; }
+.quick::after { right: 0; }
+@media (max-width: 599px) {   /* 휴대폰: 다음 아이콘이 살짝 보여 밀 수 있음을 알림, 버튼 없음 */
+  .quick { --cols: 4.4; --orb: 64px; }
+  .quick::before, .quick::after, .quick__arrow { display: none; }
+}
+@media (hover: none) { .quick__arrow { display: none; } }   /* 터치 화면은 손가락으로 밀기 */
 .quick__btn {
   display: flex; flex-direction: column; align-items: center;
-  width: var(--slot); padding-top: 6px; /* 배지·확대가 잘리지 않게 */
+  width: 100%; padding-top: 6px; /* 배지·확대가 잘리지 않게 */
 }
 .quick__ring {
   position: relative; width: var(--orb); aspect-ratio: 1;
@@ -377,7 +417,7 @@ img { display: block; }
   .header__left { gap: 4vw; min-width: 0; }
   .gnb { gap: 3.6vw; overflow-x: auto; scrollbar-width: none; }
   .gnb a { font-size: 14px; white-space: nowrap; }
-  .header__right .profile { display: none; }
+  .btn-login { height: 30px; padding: 0 12px; font-size: 13px; }
   .hero { --peek: 16px; }
   .hero__card { aspect-ratio: 4 / 5; min-height: 0; }
   .hero__shade { background: linear-gradient(0deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 65%); }

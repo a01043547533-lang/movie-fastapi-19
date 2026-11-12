@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { img } from '../api'
+import { ChevronLeft, ChevronRight } from './Icons'
 
 /**
  * 배너와 콘텐츠 사이의 동그란 바로가기 아이콘 줄 (TVING 메인 참고)
@@ -55,9 +56,39 @@ export default function QuickMenu({ home, onSelect, onNavigate }) {
     document.getElementById(`row-${it.row}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // 화면 밖으로 넘치는 아이콘은 좌우 버튼으로 넘김 (캐러셀처럼)
+  const listRef = useRef(null)
+  const [edge, setEdge] = useState({ start: true, end: true })
+  const updateEdge = useCallback(() => {
+    const el = listRef.current
+    if (!el) return
+    setEdge({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 })
+  }, [])
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    updateEdge()
+    const ro = new ResizeObserver(updateEdge)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [items, updateEdge])
+  const slide = (dir) => {
+    const el = listRef.current
+    const slot = el.querySelector('li')?.getBoundingClientRect().width || 120
+    const cs = getComputedStyle(el)
+    const inner = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+    el.scrollBy({ left: dir * Math.max(1, Math.round(inner / slot)) * slot, behavior: 'smooth' })   // 한 화면씩
+  }
+
   return (
     <nav className="quick" aria-label="바로가기">
-      <ul className="quick__list">
+      {!edge.start && (
+        <button type="button" className="quick__arrow quick__arrow--prev" onClick={() => slide(-1)} aria-label="이전 바로가기"><ChevronLeft /></button>
+      )}
+      {!edge.end && (
+        <button type="button" className="quick__arrow quick__arrow--next" onClick={() => slide(1)} aria-label="다음 바로가기"><ChevronRight /></button>
+      )}
+      <ul className="quick__list" ref={listRef} onScroll={updateEdge}>
         {items.map((it) => (
           <li key={it.key}>
             <button type="button" className="quick__btn" onClick={() => handle(it)}>

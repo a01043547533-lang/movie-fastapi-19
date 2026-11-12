@@ -24,7 +24,7 @@ export default function Header({ current, onNavigate, onSearch, searching }) {
   return (
     <header className={`header ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="header__left">
-        <a className="logo" href="#/" onClick={(e) => go(e, 'home')}>TVING</a>
+        <a className="logo" href="#/" onClick={(e) => go(e, 'home')} aria-label="뭐볼까 홈">뭐볼까</a>
         <nav className="gnb">
           {MENUS.map((m) => (
             <a
@@ -41,9 +41,8 @@ export default function Header({ current, onNavigate, onSearch, searching }) {
       </div>
       <div className="header__right">
         <button className={`icon-btn ${searching ? 'is-active' : ''}`} aria-label="검색" onClick={onSearch}><SearchIcon /></button>
-        <button className="profile" aria-label="프로필">
-          <span className="profile__img" />
-        </button>
+        {/* 로그인 기능은 없음 (변경 전 프로필 버튼처럼 모양만) */}
+        <button type="button" className="btn-login">로그인</button>
       </div>
     </header>
   )
