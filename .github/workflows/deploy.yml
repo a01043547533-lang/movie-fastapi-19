@@ -2,7 +2,6 @@
 # (GitHub 저장소 > Actions 탭에서 "Run workflow"로 직접 실행할 수도 있습니다.)
 #
 # 필요한 GitHub Secrets (Settings > Secrets and variables > Actions)
-#   AWS_ROLE_ARN     : scripts/setup-aws-github.sh 실행 후 나오는 IAM 역할 ARN
 #   EC2_SSH_KEY      : 서버 접속용 개인키(.pem) 내용 전체
 #   EC2_KNOWN_HOSTS  : 서버 호스트 키 (ssh-keyscan 결과, 가짜 서버 접속 방지)
 name: Deploy to AWS
@@ -17,14 +16,11 @@ concurrency:
   cancel-in-progress: false   # 배포 도중 끊기지 않게 순서대로 실행
 
 permissions:
-  id-token: write   # AWS에 비밀번호 없이 로그인(OIDC)
   contents: read
 
 env:
-  AWS_REGION: ap-southeast-2
   EC2_HOST: 3.105.22.205
   EC2_USER: ubuntu
-  EC2_SG_ID: sg-0988d21181365c482
 
 jobs:
   deploy:
@@ -47,20 +43,6 @@ jobs:
       - name: 백엔드 문법 확인
         run: python3 -m py_compile backend/main.py
 
-      - name: AWS 로그인 (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # 서버의 SSH(22번)는 평소 닫혀 있고, 배포하는 동안만 이 러너 IP에 열어 줍니다
-      - name: SSH 임시 허용
-        id: runner
-        run: |
-          IP=$(curl -fsS https://checkip.amazonaws.com | tr -d '[:space:]')
-          echo "ip=$IP" >> "$GITHUB_OUTPUT"
-          aws ec2 authorize-security-group-ingress --group-id "$EC2_SG_ID" \
-            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=$IP/32,Description=github-actions-deploy}]"
 
       - name: 서버에 업로드하고 배포
         env:
@@ -79,12 +61,6 @@ jobs:
 
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes /tmp/app.tgz "$EC2_USER@$EC2_HOST:/tmp/movie-app.tgz"
           $SSH "$EC2_USER@$EC2_HOST" 'bash -s' < scripts/deploy-remote.sh
-
-      - name: SSH 다시 닫기
-        if: always() && steps.runner.outputs.ip != ''
-        run: |
-          aws ec2 revoke-security-group-ingress --group-id "$EC2_SG_ID" \
-            --protocol tcp --port 22 --cidr "${{ steps.runner.outputs.ip }}/32"
 
       - name: 외부 접속 확인
         run: |

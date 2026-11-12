@@ -41,18 +41,15 @@ git add . && git commit -m "변경 내용" && git push
 
 동작 순서 (`.github/workflows/deploy.yml`)
 1. 프론트 빌드·백엔드 문법 확인 (실패하면 서버는 건드리지 않음)
-2. AWS 로그인(OIDC, 액세스 키 없음) → 보안 그룹에 러너 IP만 SSH 임시 허용
-3. 코드 묶음 업로드 → 서버에서 `scripts/deploy-remote.sh` 실행
+2. 코드 묶음을 SSH로 업로드 → 서버에서 `scripts/deploy-remote.sh` 실행
    - 서버에만 있는 `backend/.env` 유지, `docker compose up -d --build`
    - 상태 확인 실패 시 **이전 버전으로 자동 복구**
-4. SSH 규칙 삭제 → 외부에서 화면·API 확인
+3. 외부에서 화면·API 확인
 
-처음 한 번만 설정
-1. GitHub에 저장소 생성 후 push
-2. `bash scripts/setup-aws-github.sh <아이디>/<저장소>` → 출력된 ARN 확인
-3. 저장소 Settings > Secrets and variables > Actions 에 등록
-   | 이름 | 값 |
-   |---|---|
-   | `AWS_ROLE_ARN` | 2번에서 나온 ARN |
-   | `EC2_SSH_KEY` | `movie-deploy-key.pem` 파일 내용 전체 |
-   | `EC2_KNOWN_HOSTS` | `ssh-keyscan 3.105.22.205` 결과 |
+필요한 GitHub Secrets (Settings > Secrets and variables > Actions)
+| 이름 | 값 |
+|---|---|
+| `EC2_SSH_KEY` | `movie-deploy-key.pem` 파일 내용 전체 |
+| `EC2_KNOWN_HOSTS` | `ssh-keyscan 3.105.22.205` 결과 (서버 호스트 키) |
+
+서버 SSH(22번)는 GitHub Actions 접속을 위해 전체(0.0.0.0/0)에 열려 있으며, 비밀번호 로그인은 꺼져 있어 열쇠(.pem)로만 접속됩니다.
